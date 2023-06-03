@@ -2,15 +2,17 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+
 	"github.com/openshift/api"
 	yaml "gopkg.in/yaml.v2"
-	"io/ioutil"
+	kapiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	serializer "k8s.io/apimachinery/pkg/runtime/serializer"
 	jsonserializer "k8s.io/apimachinery/pkg/runtime/serializer/json"
 	"k8s.io/kubectl/pkg/scheme"
-	"os"
 )
 
 var ProtobufMediaType = "application/vnd.kubernetes.protobuf"
@@ -24,6 +26,11 @@ func main() {
 
 	api.Install(scheme.Scheme)
 	api.InstallKube(scheme.Scheme)
+
+	builder := runtime.NewSchemeBuilder(
+		kapiregistrationv1.AddToScheme,
+	)
+	builder.AddToScheme(scheme.Scheme)
 
 	if os.Args[1] == "decode" {
 		decoder := scheme.Codecs.UniversalDeserializer()
