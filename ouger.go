@@ -78,7 +78,8 @@ func main() {
 
 		err = encoder.Encode(obj, os.Stdout)
 		if err != nil {
-			panic(err)
+			// just return the raw value
+			os.Stdout.Write(stdin)
 		}
 	} else {
 		panic(fmt.Errorf("invalid argument: %v", os.Args[1]))
