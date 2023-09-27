@@ -15,9 +15,18 @@ func main() {
 	}
 
 	if os.Args[1] == "decode" {
-		os.Stdout.Write(codec.Decode(stdin))
+		bytes, err := codec.Decode(stdin)
+		if err != nil {
+			panic(fmt.Errorf("unable to decode data: %v", err))
+		}
+		os.Stdout.Write(bytes)
 	} else if os.Args[1] == "encode" {
-		os.Stdout.Write(codec.Encode(stdin))
+
+		bytes, err := codec.Encode(stdin)
+		if err != nil {
+			panic(fmt.Errorf("unable to encode data: %v", err))
+		}
+		os.Stdout.Write(bytes)
 	} else {
 		panic(fmt.Errorf("invalid argument: %v", os.Args[1]))
 	}

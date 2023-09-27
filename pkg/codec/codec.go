@@ -14,6 +14,55 @@ import (
 	"k8s.io/kubectl/pkg/scheme"
 )
 
+func Decode(input []byte) ([]byte, error) {
+	var buf bytes.Buffer
+	if _, ok := tryFindProto(input); ok {
+		decoder := scheme.Codecs.UniversalDeserializer()
+		encoder := jsonserializer.NewYAMLSerializer(jsonserializer.DefaultMetaFactory, scheme.Scheme, scheme.Scheme)
+
+		obj, _, err := decoder.Decode(input, nil, nil)
+		if err != nil {
+			return nil, fmt.Errorf("unable to decode input: %s", err)
+		}
+
+		err = encoder.Encode(obj, &buf)
+		if err != nil {
+			return nil, fmt.Errorf("unable to encode input: %s", err)
+		}
+	} else {
+		buf.Write(input)
+	}
+
+	return buf.Bytes(), nil
+}
+
+func Encode(input []byte) ([]byte, error) {
+	typeMeta, err := typeMetaFromYaml(input)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse input: %s", err)
+	}
+
+	encoder, err := newEncoder(typeMeta)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get encoder: %s", err)
+	}
+
+	decoder := scheme.Codecs.UniversalDeserializer()
+	obj, _, err := decoder.Decode(input, nil, nil)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decode input: %s", err)
+	}
+
+	var buf bytes.Buffer
+	err = encoder.Encode(obj, &buf)
+	if err != nil {
+		// just return the raw value
+		buf.Write(input)
+	}
+
+	return buf.Bytes(), nil
+}
+
 func init() {
 	api.Install(scheme.Scheme)
 	api.InstallKube(scheme.Scheme)
@@ -36,54 +85,6 @@ func tryFindProto(in []byte) ([]byte, bool) {
 	return nil, false
 }
 
-func Decode(input []byte) []byte {
-	var buf bytes.Buffer
-	if _, ok := tryFindProto(input); ok {
-		decoder := scheme.Codecs.UniversalDeserializer()
-		encoder := jsonserializer.NewYAMLSerializer(jsonserializer.DefaultMetaFactory, scheme.Scheme, scheme.Scheme)
-
-		obj, _, err := decoder.Decode(input, nil, nil)
-		if err != nil {
-			panic(err)
-		}
-
-		err = encoder.Encode(obj, &buf)
-		if err != nil {
-			panic(err)
-		}
-	} else {
-		buf.Write(input)
-	}
-
-	return buf.Bytes()
-}
-
-func Encode(input []byte) []byte {
-	typeMeta, err := typeMetaFromYaml(input)
-	if err != nil {
-		panic(err)
-	}
-
-	encoder, err := newEncoder(typeMeta)
-	if err != nil {
-		panic(err)
-	}
-
-	decoder := scheme.Codecs.UniversalDeserializer()
-	obj, _, err := decoder.Decode(input, nil, nil)
-	if err != nil {
-		panic(err)
-	}
-
-	var buf bytes.Buffer
-	err = encoder.Encode(obj, &buf)
-	if err != nil {
-		// just return the raw value
-		buf.Write(input)
-	}
-
-	return buf.Bytes()
-}
 
 func typeMetaFromYaml(in []byte) (*runtime.TypeMeta, error) {
 	var meta runtime.TypeMeta
