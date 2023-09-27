@@ -1,4 +1,4 @@
-module github.com/omertuc/ouger
+module github.com/rh-ecosystem-edge/ouger
 
 go 1.19
 
