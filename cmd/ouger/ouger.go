@@ -15,9 +15,9 @@ func main() {
 	}
 
 	if os.Args[1] == "decode" {
-		codec.Decode(stdin)
+		os.Stdout.Write(codec.Decode(stdin))
 	} else if os.Args[1] == "encode" {
-		codec.Encode(stdin)
+		os.Stdout.Write(codec.Encode(stdin))
 	} else {
 		panic(fmt.Errorf("invalid argument: %v", os.Args[1]))
 	}

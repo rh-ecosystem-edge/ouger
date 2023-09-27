@@ -3,7 +3,6 @@ package codec
 import (
 	"bytes"
 	"fmt"
-	"os"
 
 	"github.com/openshift/api"
 	yaml "gopkg.in/yaml.v2"
@@ -37,7 +36,8 @@ func tryFindProto(in []byte) ([]byte, bool) {
 	return nil, false
 }
 
-func Decode(input []byte) {
+func Decode(input []byte) []byte {
+	var buf bytes.Buffer
 	if _, ok := tryFindProto(input); ok {
 		decoder := scheme.Codecs.UniversalDeserializer()
 		encoder := jsonserializer.NewYAMLSerializer(jsonserializer.DefaultMetaFactory, scheme.Scheme, scheme.Scheme)
@@ -46,16 +46,19 @@ func Decode(input []byte) {
 		if err != nil {
 			panic(err)
 		}
-		err = encoder.Encode(obj, os.Stdout)
+
+		err = encoder.Encode(obj, &buf)
 		if err != nil {
 			panic(err)
 		}
 	} else {
-		os.Stdout.Write(input)
+		buf.Write(input)
 	}
+
+	return buf.Bytes()
 }
 
-func Encode(input []byte) {
+func Encode(input []byte) []byte {
 	typeMeta, err := typeMetaFromYaml(input)
 	if err != nil {
 		panic(err)
@@ -72,11 +75,14 @@ func Encode(input []byte) {
 		panic(err)
 	}
 
-	err = encoder.Encode(obj, os.Stdout)
+	var buf bytes.Buffer
+	err = encoder.Encode(obj, &buf)
 	if err != nil {
 		// just return the raw value
-		os.Stdout.Write(input)
+		buf.Write(input)
 	}
+
+	return buf.Bytes()
 }
 
 func typeMetaFromYaml(in []byte) (*runtime.TypeMeta, error) {
