@@ -53,6 +53,11 @@ func decodeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(decoded)
 }
 
+func healthzHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
+}
+
 func main() {
 	var port int
 	flag.IntVar(&port, "port", 8080, "Port to listen on")
@@ -60,6 +65,7 @@ func main() {
 
 	http.HandleFunc("/encode", encodeHandler)
 	http.HandleFunc("/decode", decodeHandler)
+	http.HandleFunc("/healthz", healthzHandler)
 
 	err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 	if err != nil {
